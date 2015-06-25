@@ -36,6 +36,10 @@ angular.module('opentok', [])
         streams: [],
         connections: [],
         publishers: [],
+        ui: {
+          hasAudio: true,
+          hasVideo: true
+        },
         init: function (sessionId, token) {
           this.session = TB.initSession(sessionId);
 
@@ -92,6 +96,22 @@ angular.module('opentok', [])
               listeners[key].call(targetSelf, event);
             });
           });
+        },
+        togglePublishersAudio: function (condition) {
+          OTSession.ui.hasAudio = typeof condition === 'boolean' ? condition : !OTSession.ui.hasAudio;
+          OTSession.publishers.forEach(function (publisher) {
+            publisher.publishAudio(OTSession.ui.hasAudio);
+          });
+        },
+        togglePublishersVideo: function (condition) {
+          OTSession.ui.hasVideo = typeof condition === 'boolean' ? condition : !OTSession.ui.hasVideo;
+          OTSession.publishers.forEach(function (publisher) {
+            publisher.publishVideo(OTSession.ui.hasVideo);
+          });
+        },
+        resetPublishers: function () {
+          OTSession.togglePublishersAudio(true);
+          OTSession.togglePublishersVideo(true);
         }
       };
       TB.$.eventing(OTSession);
@@ -149,8 +169,8 @@ angular.module('opentok', [])
       },
       link: function (scope, element) {
         var props = scope.props() || {};
-        props.width = props.width || angular.element(element).width();
-        props.height = props.height || angular.element(element).height();
+        props.width = props.width || element[0].offsetWidth;
+        props.height = props.height || element[0].offsetHeight;
         var oldChildren = angular.element(element).children();
         scope.publisher = OTSession.initPublisher(element[0], props);
         // Make transcluding work manually by putting the children back in there
@@ -168,9 +188,7 @@ angular.module('opentok', [])
           scope.publisher = null;
         });
         if (OTSession.isSessionConnected()) {
-          OTSession.session.publish(scope.publisher, function (err) {
-            if (err) scope.$emit('otPublisherError', err, scope.publisher);
-          });
+          OTSession.session.publish(scope.publisher);
         } else {
           scope.publisher.on('streamDestroyed', function (event) {
             event.preventDefault();
@@ -179,34 +197,28 @@ angular.module('opentok', [])
         OTSession.publishers.push(scope.publisher);
       }
     };
-  }
-  ])
-  .directive('otSubscriber', ['OTSession',
-    function (OTSession) {
-      return {
-        restrict: 'E',
-        scope: {
-          stream: '=',
-          props: '&'
-        },
-        link: function (scope, element) {
-          var stream = scope.stream,
-            props = scope.props() || {};
-          props.width = props.width ? props.width : angular.element(element).width();
-          props.height = props.height ? props.height : angular.element(element).height();
-          var oldChildren = angular.element(element).children();
-          var subscriber = OTSession.session.subscribe(stream, element[0], props, function (err) {
-            if (err) scope.$emit('otSubscriberError', err, subscriber);
-          });
-          subscriber.on('loaded', function () {
-            scope.$emit('otLayout');
-          });
-          // Make transcluding work manually by putting the children back in there
-          angular.element(element).append(oldChildren);
-          scope.$on('$destroy', function () {
-            OTSession.session.unsubscribe(subscriber);
-          });
-        }
-      };
-    }
-  ]);
+  }])
+  .directive('otSubscriber', ['OTSession', function (OTSession) {
+    return {
+      restrict: 'E',
+      scope: {
+        stream: '=',
+        props: '&'
+      },
+      link: function (scope, element) {
+        var props = scope.props() || {};
+        props.width = props.width || element[0].offsetWidth;
+        props.height = props.height || element[0].offsetHeight;
+        var oldChildren = element.children();
+        var subscriber = OTSession.session.subscribe(scope.stream, element[0], props, function (err) {
+          if (err) scope.$emit('otSubscriberError', err, subscriber);
+        });
+        subscriber.on('loaded', scope.$emit.bind(scope, 'otLayout'));
+        // Make transcluding work manually by putting the children back in there
+        angular.element(element).append(oldChildren);
+        scope.$on('$destroy', function () {
+          OTSession.session.unsubscribe(subscriber);
+        });
+      }
+    };
+  }]);
