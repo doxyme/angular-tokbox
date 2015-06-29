@@ -119,6 +119,23 @@ angular.module('opentok', [])
         resetPublishers: function () {
           OTSession.togglePublishersAudio(true);
           OTSession.togglePublishersVideo(true);
+        },
+        getUniqueStreams: function (preferred) {
+          function isDuplication(j, id) {
+            while (j--) {
+              var innerStream = OTSession.streams[j];
+              if (innerStream.connection.id === id) return true;
+            }
+          }
+          var streams = [];
+          var i = OTSession.streams.length;
+          while (i--) {
+            var stream = OTSession.streams[i];
+            if (stream.videoType === preferred || !isDuplication(i, stream.connection.id)) {
+              streams.push(stream);
+            }
+          }
+          return streams;
         }
       };
       TB.$.eventing(OTSession);
@@ -128,8 +145,8 @@ angular.module('opentok', [])
   .factory('OTDirectivesHelpers', function () {
     var volumeLevels = [
       {level: 0, name: 'volume-low'},
-      {level: 0.3, name: 'volume-mid'},
-      {level: 0.8, name: 'volume-high'}
+      {level: 0.2, name: 'volume-medium'},
+      {level: 0.9, name: 'volume-high'}
     ];
 
     var OTDirectivesHelpers = {
@@ -165,7 +182,6 @@ angular.module('opentok', [])
         var getVolumeMethod = OTDirectivesHelpers.getVolumeLevelChanges();
         return function (event) {
           var changes = getVolumeMethod(event);
-          console.log(changes);
           if (changes.previous === changes.current) return;
           element.removeClass(changes.previous);
           element.addClass(changes.current);
