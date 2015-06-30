@@ -36,6 +36,7 @@ angular.module('opentok', [])
         streams: [],
         connections: [],
         publishers: [],
+        subscribers: [],
         ui: {
           hasAudio: true,
           hasVideo: true
@@ -149,7 +150,7 @@ angular.module('opentok', [])
       {level: 0.9, name: 'volume-high'}
     ];
 
-    var OTDirectivesHelpers = {
+    return {
       getVolumeLevelChanges: function () {
         var movingAvg = null;
         var previousLevel = null;
@@ -179,7 +180,7 @@ angular.module('opentok', [])
           return level.name;
         }).join(' ');
         element.removeClass(volumeNames);
-        var getVolumeMethod = OTDirectivesHelpers.getVolumeLevelChanges();
+        var getVolumeMethod = this.getVolumeLevelChanges();
         return function (event) {
           var changes = getVolumeMethod(event);
           if (changes.previous === changes.current) return;
@@ -187,8 +188,7 @@ angular.module('opentok', [])
           element.addClass(changes.current);
         }
       }
-    };
-    return OTDirectivesHelpers;
+    }
   })
   .directive('otLayout', ['$window', '$parse', 'TB', 'OTSession', function ($window, $parse, TB, OTSession) {
     return {
@@ -289,11 +289,13 @@ angular.module('opentok', [])
           var subscriber = OTSession.session.subscribe(scope.stream, element[0], props, function (err) {
             if (err) scope.$emit('otSubscriberError', err, subscriber);
           });
+          OTSession.subscribers.push(subscriber);
           subscriber.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
           subscriber.on('loaded', scope.$emit.bind(scope, 'otLayout'));
           // Make transcluding work manually by putting the children back in there
           angular.element(element).append(oldChildren);
           scope.$on('$destroy', function () {
+            OTSession.subscribers.splice(OTSession.subscribers.indexOf(subscriber), 1);
             OTSession.session.unsubscribe(subscriber);
           });
         }
