@@ -12,14 +12,11 @@ if (!window.TB) throw new Error('You must include the TB library before the TB_A
 
 angular.module('opentok', [])
   .constant('TB', window.TB)
-  .provider('OTConfig', function (TB) {
+  .provider('OTConfig', function () {
     var _apiKey;
     return {
       setKey: function (value) {
         _apiKey = value;
-      },
-      setExceptionHandler: function (handler) {
-        TB.on('exception', handler);
       },
       $get: function () {
         return {
@@ -28,8 +25,8 @@ angular.module('opentok', [])
       }
     };
   })
-  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log',
-    function (TB, $rootScope, $q, OTConfig, $log) {
+  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '_',
+    function (TB, $rootScope, $q, OTConfig, $log, _) {
       if (!OTConfig.apiKey) throw new Error('You need to specify api key');
 
       var OTSession = {
@@ -122,38 +119,37 @@ angular.module('opentok', [])
           OTSession.togglePublishersVideo(true);
         },
         getUniqueStreams: function (preferred) {
-          function isDuplication(j, id) {
-            while (j--) {
-              var innerStream = OTSession.streams[j];
-              if (innerStream.connection.id === id) return true;
-            }
-          }
-          var streams = [];
-          var i = OTSession.streams.length;
-          while (i--) {
-            var stream = OTSession.streams[i];
-            if (stream.videoType === preferred || !isDuplication(i, stream.connection.id)) {
-              streams.push(stream);
-            }
-          }
-          return streams;
+          var groups =_.groupBy(OTSession.streams, function (stream) {
+            return stream.connection.id;
+          });
+          return Object.keys(groups).map(function (key) {
+            var streamGroup = groups[key];
+            if (streamGroup.length === 1) return streamGroup[0];
+            return _.find(streamGroup, {videoType: preferred});
+          });
+        },
+        disconnect: function () {
+          if (!OTSession.isSessionConnected()) return;
+          OTSession.publishers.forEach(function (publisher) {
+            OTSession.session.unpublish(publisher);
+          });
+          OTSession.session.disconnect();
+          OTSession.session = null;
         }
       };
       TB.$.eventing(OTSession);
       return OTSession;
     }
   ])
-  .factory('OTDirectivesHelpers', function () {
-    var volumeLevels = [
-      {level: 0, name: 'volume-low'},
-      {level: 0.2, name: 'volume-medium'},
-      {level: 0.9, name: 'volume-high'}
-    ];
-
+  .factory('OTDirectivesHelpers', ['_', function (_) {
     return {
+      volumeLevels: [
+        {level: 0, name: 'volume-low'},
+        {level: 0.3, name: 'volume-medium'},
+        {level: 0.85, name: 'volume-high'}
+      ],
       getVolumeLevelChanges: function () {
         var movingAvg = null;
-        var previousLevel = null;
         return function (event) {
           if (movingAvg === null || movingAvg <= event.audioLevel) {
             movingAvg = event.audioLevel;
@@ -162,34 +158,39 @@ angular.module('opentok', [])
           }
           // 1.5 scaling to map the -30 - 0 dBm range to [0,1]
           var logLevel = (Math.log(movingAvg) / Math.LN10) / 1.5 + 1;
-          logLevel = Math.min(Math.max(logLevel, 0), 1);
-          var result = {
-            previous: previousLevel,
-            current: null
-          };
-          volumeLevels.forEach(function (volumeLevel) {
-            if (logLevel <= volumeLevel.level) return;
-            result.current = volumeLevel.name;
-          });
-          previousLevel = result.current;
-          return result;
+          return Math.min(Math.max(logLevel, 0), 1);
         }
       },
-      setVolumeLevelChanges: function (element) {
-        var volumeNames = volumeLevels.map(function (level) {
+      setVolumeLevelChanges: function (element, callback) {
+        var _this = this;
+        var volumeNames = this.volumeLevels.map(function (level) {
           return level.name;
         }).join(' ');
+
         element.removeClass(volumeNames);
         var getVolumeMethod = this.getVolumeLevelChanges();
+
+        var sum = 0;
+        var count = 0;
+        var previousLevel;
         return function (event) {
-          var changes = getVolumeMethod(event);
-          if (changes.previous === changes.current) return;
-          element.removeClass(changes.previous);
-          element.addClass(changes.current);
-        }
+          sum += getVolumeMethod(event);
+          count++;
+          if (count !== 30) return;
+          var average = sum / count;
+          sum = count = 0;
+          var currentLevel = _.findLast(_this.volumeLevels, function (volumeLevel) {
+            return average >= volumeLevel.level;
+          }).name;
+          callback && callback(currentLevel);
+          if (previousLevel === currentLevel) return;
+          previousLevel = currentLevel;
+          element.removeClass(volumeNames);
+          element.addClass(currentLevel);
+        };
       }
     }
-  })
+  }])
   .directive('otLayout', ['$window', '$parse', 'TB', 'OTSession', function ($window, $parse, TB, OTSession) {
     return {
       restrict: 'E',
@@ -214,8 +215,7 @@ angular.module('opentok', [])
         OTSession.on('init', listenForStreamChange);
       }
     };
-  }
-  ])
+  }])
   .directive('otPublisher', [
     '$rootScope', 'OTSession', 'OTDirectivesHelpers',
     function ($rootScope, OTSession, OTDirectivesHelpers) {
@@ -249,7 +249,9 @@ angular.module('opentok', [])
           // Make transcluding work manually by putting the children back in there
           angular.element(element).append(oldChildren);
           accessDialogEvents(scope.publisher);
-          scope.publisher.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
+          scope.publisher.on('loaded', function () {
+            scope.publisher.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
+          });
           scope.$on('$destroy', function () {
             if (OTSession.session) {
               OTSession.session.unpublish(scope.publisher);
@@ -272,6 +274,28 @@ angular.module('opentok', [])
         }
       };
     }])
+  .directive('otActiveCallerLayout', ['_', 'OTDirectivesHelpers', function (_, OTDirectivesHelpers) {
+    return {
+      restrict: 'EA',
+      link: function (scope) {
+        var activeCaller = null;
+        var readyToChange = true;
+        var delayReadyToChange = _.debounce(function () {
+          readyToChange = true;
+        }, 500);
+        scope.$on('subscriber:volumeLevel', function ($event, targetElement, level) {
+          if (level === OTDirectivesHelpers.volumeLevels[0].name) return;
+          if (readyToChange && targetElement !== activeCaller) {
+            activeCaller && activeCaller.removeClass('ot-active');
+            activeCaller = targetElement.addClass('ot-active');
+            readyToChange = false;
+          } else if (targetElement === activeCaller) {
+            delayReadyToChange();
+          }
+        });
+      }
+    };
+  }])
   .directive('otSubscriber', [
     'OTSession', 'OTDirectivesHelpers',
     function (OTSession, OTDirectivesHelpers) {
@@ -282,6 +306,7 @@ angular.module('opentok', [])
           props: '&'
         },
         link: function (scope, element) {
+          element.addClass('ot-' + scope.stream.videoType);
           var props = scope.props() || {};
           props.width = props.width || element[0].offsetWidth;
           props.height = props.height || element[0].offsetHeight;
@@ -289,14 +314,18 @@ angular.module('opentok', [])
           var subscriber = OTSession.session.subscribe(scope.stream, element[0], props, function (err) {
             if (err) scope.$emit('otSubscriberError', err, subscriber);
           });
-          OTSession.subscribers.push(subscriber);
-          subscriber.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
-          subscriber.on('loaded', scope.$emit.bind(scope, 'otLayout'));
+          subscriber.on('loaded', function () {
+            OTSession.subscribers.push(subscriber);
+            scope.$emit(scope, 'otLayout');
+            subscriber.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element, function (level) {
+              scope.$emit('subscriber:volumeLevel', element, level);
+            }));
+          });
           // Make transcluding work manually by putting the children back in there
           angular.element(element).append(oldChildren);
           scope.$on('$destroy', function () {
             OTSession.subscribers.splice(OTSession.subscribers.indexOf(subscriber), 1);
-            OTSession.session.unsubscribe(subscriber);
+            OTSession.session && OTSession.session.unsubscribe(subscriber);
           });
         }
       };
