@@ -1,6 +1,6 @@
 {
   "name": "opentok-angular",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Angular module for OpenTok",
   "main": "opentok-angular.js",
   "dependencies": {
@@ -25,16 +25,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aullman/OpenTok-Angular.git"
+    "url": "git@bitbucket.org:doxyme/angular-tokbox.git"
   },
   "keywords": [
     "opentok",
     "angular"
-  ],
-  "author": "Adam Ullman",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/aullman/OpenTok-Angular/issues"
-  },
-  "homepage": "https://github.com/aullman/OpenTok-Angular"
+  ]
 }
