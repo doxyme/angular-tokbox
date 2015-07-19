@@ -28,25 +28,23 @@ angular.module('opentok', [])
   .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '_',
     function (TB, $rootScope, $q, OTConfig, $log, _) {
       if (!OTConfig.apiKey) throw new Error('You need to specify api key');
-      var _session;
+
       var OTSession = {
         streams: [],
         connections: [],
-        publishers: [],
+        publisher: [],
         subscribers: [],
         ui: {
           hasAudio: true,
           hasVideo: true
         },
         init: function (sessionId, token) {
-          this.session = _session = TB.initSession(OTConfig.apiKey, sessionId);
+          this.session = TB.initSession(OTConfig.apiKey, sessionId);
 
-         _session.on({
+          OTSession.session.on({
             sessionConnected: function (event) {
               $log.info('sessionConnected', event);
-              OTSession.publishers.forEach(function (publisher) {
-                _session.publish(publisher);
-              });
+              OTSession.publisher && OTSession.session.publish(OTSession.publisher);
             },
             streamCreated: function (event) {
               $log.info('streamCreated', event);
@@ -82,9 +80,9 @@ angular.module('opentok', [])
           });
           OTSession.trigger('init');
           return $q(function (resolve, reject) {
-           _session.connect(token, function (err) {
+            OTSession.session.connect(token, function (err) {
               if (err) return reject(err);
-              resolve(_session);
+              resolve(OTSession.session);
             });
           });
         },
@@ -92,27 +90,23 @@ angular.module('opentok', [])
           return TB.initPublisher(OTConfig.apiKey, element, properties);
         },
         isSessionConnected: function () {
-          return _session && (_session.connected ||
-            (_session.isConnected && _session.isConnected()));
+          return this.session && (this.session.connected ||
+            (this.session.isConnected && this.session.isConnected()));
         },
         listen: function (listeners, targetSelf) {
           Object.keys(listeners).forEach(function (key) {
-           _session.on(key, function (event) {
+            OTSession.session.on(key, function (event) {
               listeners[key].call(targetSelf, event);
             });
           });
         },
         togglePublishersAudio: function (condition) {
           OTSession.ui.hasAudio = typeof condition === 'boolean' ? condition : !OTSession.ui.hasAudio;
-          OTSession.publishers.forEach(function (publisher) {
-            publisher.publishAudio(OTSession.ui.hasAudio);
-          });
+          OTSession.publisher && OTSession.publisher.publishAudio(OTSession.ui.hasAudio);
         },
         togglePublishersVideo: function (condition) {
           OTSession.ui.hasVideo = typeof condition === 'boolean' ? condition : !OTSession.ui.hasVideo;
-          OTSession.publishers.forEach(function (publisher) {
-            publisher.publishVideo(OTSession.ui.hasVideo);
-          });
+          OTSession.publisher && OTSession.publisher.publishVideo(OTSession.ui.hasVideo);
         },
         resetPublishers: function () {
           OTSession.togglePublishersAudio(true);
@@ -124,16 +118,15 @@ angular.module('opentok', [])
           });
           return Object.keys(groups).map(function (key) {
             var streamGroup = groups[key];
-            return _.find(streamGroup, {videoType: preferred}) || streamGroup[0];
+            if (streamGroup.length === 1) return streamGroup[0];
+            return _.find(streamGroup, {videoType: preferred});
           });
         },
         disconnect: function () {
-          //if (!OTSession.isSessionConnected()) return;
-          OTSession.publishers.forEach(function (publisher) {
-            _session.unpublish(publisher);
-          });
-          _session.disconnect();
-          //OTSession.session = _session = null;
+          if (!OTSession.isSessionConnected()) return;
+          OTSession.publisher && OTSession.session.unpublish(OTSession.publisher);
+          OTSession.session.disconnect();
+          OTSession.session = null;
         }
       };
       TB.$.eventing(OTSession);
@@ -257,10 +250,7 @@ angular.module('opentok', [])
             } else {
               scope.publisher.destroy();
             }
-            OTSession.publishers = OTSession.publishers.filter(function (publisher) {
-              return publisher !== scope.publisher;
-            });
-            scope.publisher = null;
+            OTSession.publisher = scope.publisher = null;
           });
           if (OTSession.isSessionConnected()) {
             OTSession.session.publish(scope.publisher);
@@ -269,7 +259,7 @@ angular.module('opentok', [])
               event.preventDefault();
             });
           }
-          OTSession.publishers.push(scope.publisher);
+          OTSession.publisher = scope.publisher;
         }
       };
     }])
