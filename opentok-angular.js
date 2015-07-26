@@ -32,8 +32,8 @@ angular.module('opentok', [])
       var OTSession = {
         streams: [],
         connections: [],
-        publisher: [],
         subscribers: [],
+        publisher: null,
         ui: {
           hasAudio: true,
           hasVideo: true
