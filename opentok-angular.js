@@ -275,7 +275,7 @@ angular.module('opentok', [])
         link: function (scope, element) {
           var screensharePublisher;
           var props = angular.extend({
-            name: 'Screen',
+            //name: 'Screen',
             mirror: false,
             audioSource: null,
             videoSource: 'screen',
@@ -287,16 +287,6 @@ angular.module('opentok', [])
           screensharePublisher = OTSession.initPublisher(element[0], props, function (err) {
             $log.info('screensharePublisher', arguments);
             if (err) return $rootScope.$emit('otScreenPublisher:error', err);
-            if (OTSession.publisher) {
-              OTSession.publisher.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
-            }
-            if (OTSession.isSessionConnected()) {
-              OTSession.session.publish(screensharePublisher);
-            } else {
-              screensharePublisher.on('streamDestroyed', function (event) {
-                event.preventDefault();
-              });
-            }
           });
           angular.element(element).append(oldChildren);
           scope.$on('$destroy', function () {
@@ -307,6 +297,16 @@ angular.module('opentok', [])
             }
             OTSession.screensharePublisher = screensharePublisher = null;
           });
+          if (OTSession.publisher) {
+            OTSession.publisher.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
+          }
+          if (OTSession.isSessionConnected()) {
+            OTSession.session.publish(screensharePublisher);
+          } else {
+            screensharePublisher.on('streamDestroyed', function (event) {
+              event.preventDefault();
+            });
+          }
           OTSession.screensharePublisher = screensharePublisher;
         }
       };
