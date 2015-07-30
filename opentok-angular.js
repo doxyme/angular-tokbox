@@ -25,10 +25,10 @@ angular.module('opentok', [])
       }
     };
   })
-  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '_',
-    function (TB, $rootScope, $q, OTConfig, $log, _) {
+  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '$timeout', '_',
+    function (TB, $rootScope, $q, OTConfig, $log, $timeout, _) {
       if (!OTConfig.apiKey) throw new Error('You need to specify api key');
-
+      //OT.setLogLevel(OT.DEBUG);
       var OTSession = {
         streams: [],
         connections: [],
@@ -44,36 +44,39 @@ angular.module('opentok', [])
 
           OTSession.session.on({
             sessionConnected: function (event) {
-              $log.info('sessionConnected', event);
+              $log.info('OTSession:sessionConnected', event);
               OTSession.publisher && OTSession.session.publish(OTSession.publisher);
             },
             streamCreated: function (event) {
-              $log.info('streamCreated', event);
+              $log.info('OTSession:streamCreated', event);
               $rootScope.$apply(function () {
                 OTSession.streams.push(event.stream);
               });
             },
             streamDestroyed: function (event) {
-              $log.info('streamDestroyed', event);
+              $log.info('OTSession:streamDestroyed', event);
               $rootScope.$apply(function () {
                 OTSession.streams.splice(OTSession.streams.indexOf(event.stream), 1);
               });
             },
             sessionDisconnected: function (event) {
-              $log.info('sessionDisconnected', event);
+              $log.info('OTSession:sessionDisconnected', event);
               $rootScope.$apply(function () {
                 OTSession.streams.splice(0, OTSession.streams.length);
+                OTSession.connections.splice(0, OTSession.connections.length);
                 OTSession.resetPublishers();
+                OTSession.off();
+                OTSession.session = null;
               });
             },
             connectionCreated: function (event) {
-              $log.info('connectionCreated', event);
+              $log.info('OTSession:connectionCreated', event);
               $rootScope.$apply(function () {
                 OTSession.connections.push(event.connection);
               });
             },
             connectionDestroyed: function (event) {
-              $log.info('connectionDestroyed', event);
+              $log.info('OTSession:connectionDestroyed', event);
               $rootScope.$apply(function () {
                 OTSession.connections.splice(OTSession.connections.indexOf(event.connection), 1);
               });
@@ -119,17 +122,16 @@ angular.module('opentok', [])
           });
           return Object.keys(groups).map(function (key) {
             var streamGroup = groups[key];
-            if (streamGroup.length === 1) return streamGroup[0];
-            return _.find(streamGroup, {videoType: preferred});
+            return _.find(streamGroup, {videoType: preferred}) || streamGroup[0];
           });
         },
         disconnect: function () {
           if (!OTSession.isSessionConnected()) return;
-          OTSession.publisher && OTSession.session.unpublish(OTSession.publisher);
+          if (OTSession.publisher) OTSession.session.unpublish(OTSession.publisher);
           OTSession.session.disconnect();
-          OTSession.session = null;
         }
       };
+      window.OTSession = OTSession;
       TB.$.eventing(OTSession);
       return OTSession;
     }
@@ -285,7 +287,7 @@ angular.module('opentok', [])
           }, scope.props() || {});
           var oldChildren = angular.element(element).children();
           screensharePublisher = OTSession.initPublisher(element[0], props, function (err) {
-            $log.info('screensharePublisher', arguments);
+            $log.info('OTSession:screensharePublisher', arguments);
             if (err) return $rootScope.$emit('otScreenPublisher:error', err);
           });
           angular.element(element).append(oldChildren);
