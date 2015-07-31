@@ -49,15 +49,13 @@ angular.module('opentok', [])
             },
             streamCreated: function (event) {
               $log.info('OTSession:streamCreated', event);
-              $rootScope.$apply(function () {
-                OTSession.streams.push(event.stream);
-              });
+              OTSession.streams.push(event.stream);
+              $rootScope.$digest();
             },
             streamDestroyed: function (event) {
               $log.info('OTSession:streamDestroyed', event);
-              $rootScope.$apply(function () {
-                OTSession.streams.splice(OTSession.streams.indexOf(event.stream), 1);
-              });
+              OTSession.streams.splice(OTSession.streams.indexOf(event.stream), 1);
+              $rootScope.$digest();
             },
             sessionDisconnected: function (event) {
               $log.info('OTSession:sessionDisconnected', event);
@@ -71,15 +69,13 @@ angular.module('opentok', [])
             },
             connectionCreated: function (event) {
               $log.info('OTSession:connectionCreated', event);
-              $rootScope.$apply(function () {
-                OTSession.connections.push(event.connection);
-              });
+              OTSession.connections.push(event.connection);
+              $rootScope.$digest();
             },
             connectionDestroyed: function (event) {
               $log.info('OTSession:connectionDestroyed', event);
-              $rootScope.$apply(function () {
-                OTSession.connections.splice(OTSession.connections.indexOf(event.connection), 1);
-              });
+              OTSession.connections.splice(OTSession.connections.indexOf(event.connection), 1);
+              $rootScope.$digest();
             }
           });
           OTSession.trigger('init');
