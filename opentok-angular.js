@@ -31,6 +31,10 @@ angular.module('opentok', [])
       //OT.setLogLevel(OT.DEBUG);
       var OTSession = {
         streams: [],
+        uniqueStreams: {
+          camera: [],
+          screen: []
+        },
         connections: [],
         subscribers: [],
         publisher: null,
@@ -50,17 +54,23 @@ angular.module('opentok', [])
             streamCreated: function (event) {
               $log.info('OTSession:streamCreated', event);
               OTSession.streams.push(event.stream);
+              OTSession.uniqueStreams.screen = OTSession.getUniqueStreams('screen');
+              OTSession.uniqueStreams.camera = OTSession.getUniqueStreams('camera');
               $rootScope.$digest();
             },
             streamDestroyed: function (event) {
               $log.info('OTSession:streamDestroyed', event);
               OTSession.streams.splice(OTSession.streams.indexOf(event.stream), 1);
+              OTSession.uniqueStreams.screen.splice(OTSession.uniqueStreams.screen.indexOf(event.stream), 1);
+              OTSession.uniqueStreams.camera.splice(OTSession.uniqueStreams.camera.indexOf(event.stream), 1);
               $rootScope.$digest();
             },
             sessionDisconnected: function (event) {
               $log.info('OTSession:sessionDisconnected', event);
               $rootScope.$apply(function () {
                 OTSession.streams.splice(0, OTSession.streams.length);
+                OTSession.uniqueStreams.screen.splice(0, OTSession.uniqueStreams.screen.length);
+                OTSession.uniqueStreams.camera.splice(0, OTSession.uniqueStreams.camera.length);
                 OTSession.connections.splice(0, OTSession.connections.length);
                 OTSession.resetPublishers();
                 OTSession.off();
@@ -341,6 +351,7 @@ angular.module('opentok', [])
           props: '&'
         },
         link: function (scope, element) {
+          if (!scope.stream) debugger;
           element.addClass('ot-' + scope.stream.videoType);
           var props = scope.props() || {};
           props.width = props.width || element[0].offsetWidth;
