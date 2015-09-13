@@ -63,6 +63,8 @@ angular.module('opentok', [])
               OTSession.streams.splice(OTSession.streams.indexOf(event.stream), 1);
               OTSession.uniqueStreams.screen.splice(OTSession.uniqueStreams.screen.indexOf(event.stream), 1);
               OTSession.uniqueStreams.camera.splice(OTSession.uniqueStreams.camera.indexOf(event.stream), 1);
+              OTSession.uniqueStreams.screen = OTSession.getUniqueStreams('screen');
+              OTSession.uniqueStreams.camera = OTSession.getUniqueStreams('camera');
               $rootScope.$digest();
             },
             sessionDisconnected: function (event) {
@@ -123,9 +125,7 @@ angular.module('opentok', [])
           OTSession.togglePublishersVideo(true);
         },
         getUniqueStreams: function (preferred) {
-          var groups = _.groupBy(OTSession.streams, function (stream) {
-            return stream.connection.id;
-          });
+          var groups = _.groupBy(OTSession.streams, 'connection.id');
           return Object.keys(groups).map(function (key) {
             var streamGroup = groups[key];
             return _.find(streamGroup, {videoType: preferred}) || streamGroup[0];
