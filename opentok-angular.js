@@ -48,18 +48,18 @@ angular.module('opentok', [])
 
           OTSession.session.on({
             sessionConnected: function (event) {
-              $log.info('OTSession:sessionConnected', event);
+              $log.debug('OTSession:sessionConnected', event);
               OTSession.publisher && OTSession.session.publish(OTSession.publisher);
             },
             streamCreated: function (event) {
-              $log.info('OTSession:streamCreated', event);
+              $log.debug('OTSession:streamCreated', event);
               OTSession.streams.push(event.stream);
               OTSession.uniqueStreams.screen = OTSession.getUniqueStreams('screen');
               OTSession.uniqueStreams.camera = OTSession.getUniqueStreams('camera');
               $rootScope.$digest();
             },
             streamDestroyed: function (event) {
-              $log.info('OTSession:streamDestroyed', event);
+              $log.debug('OTSession:streamDestroyed', event);
               OTSession.streams.splice(OTSession.streams.indexOf(event.stream), 1);
               OTSession.uniqueStreams.screen.splice(OTSession.uniqueStreams.screen.indexOf(event.stream), 1);
               OTSession.uniqueStreams.camera.splice(OTSession.uniqueStreams.camera.indexOf(event.stream), 1);
@@ -68,7 +68,7 @@ angular.module('opentok', [])
               $rootScope.$digest();
             },
             sessionDisconnected: function (event) {
-              $log.info('OTSession:sessionDisconnected', event);
+              $log.debug('OTSession:sessionDisconnected', event);
               $rootScope.$apply(function () {
                 OTSession.streams.splice(0, OTSession.streams.length);
                 OTSession.uniqueStreams.screen.splice(0, OTSession.uniqueStreams.screen.length);
@@ -80,12 +80,12 @@ angular.module('opentok', [])
               });
             },
             connectionCreated: function (event) {
-              $log.info('OTSession:connectionCreated', event);
+              $log.debug('OTSession:connectionCreated', event);
               OTSession.connections.push(event.connection);
               $rootScope.$digest();
             },
             connectionDestroyed: function (event) {
-              $log.info('OTSession:connectionDestroyed', event);
+              $log.debug('OTSession:connectionDestroyed', event);
               OTSession.connections.splice(OTSession.connections.indexOf(event.connection), 1);
               $rootScope.$digest();
             }
@@ -293,7 +293,6 @@ angular.module('opentok', [])
           }, scope.props() || {});
           var oldChildren = angular.element(element).children();
           screensharePublisher = OTSession.initPublisher(element[0], props, function (err) {
-            $log.info('OTSession:screensharePublisher', arguments);
             if (err) return $rootScope.$emit('otScreenPublisher:error', err);
           });
           angular.element(element).append(oldChildren);
