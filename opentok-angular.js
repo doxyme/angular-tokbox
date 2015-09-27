@@ -318,28 +318,31 @@ angular.module('opentok', [])
         }
       };
     }])
-  .directive('otActiveCallerLayout', ['_', 'OTDirectivesHelpers', function (_, OTDirectivesHelpers) {
-    return {
-      restrict: 'EA',
-      link: function (scope) {
-        var activeCaller = null;
-        var readyToChange = true;
-        var delayReadyToChange = _.debounce(function () {
-          readyToChange = true;
-        }, 500);
-        scope.$on('subscriber:volumeLevel', function ($event, targetElement, level) {
-          if (level === OTDirectivesHelpers.volumeLevels[0].name) return;
-          if (readyToChange && targetElement !== activeCaller) {
-            activeCaller && activeCaller.removeClass('ot-active');
-            activeCaller = targetElement.addClass('ot-active');
-            readyToChange = false;
-          } else if (targetElement === activeCaller) {
-            delayReadyToChange();
-          }
-        });
-      }
-    };
-  }])
+    .directive('otActiveCallerLayout', ['_', 'OTDirectivesHelpers', function (_, OTDirectivesHelpers) {
+      return {
+        restrict: 'EA',
+        link: function (scope) {
+          var ranking = [];
+          var lastWinner;
+          var selectWinner = _.debounce(function () {
+            lastWinner && lastWinner.removeClass('ot-active');
+            var winner = _.sortBy(ranking, 'score').pop();      
+            lastWinner = winner && winner.element.addClass('ot-active');
+            ranking = [];
+          }, 500);
+          scope.$on('subscriber:volumeLevel', function ($event, targetElement, level) {
+            var current = _.find(ranking, 'element', targetElement);
+            if (!current) {
+              current = {element: targetElement, score: 0};
+              ranking.push(current);
+            }
+            var volumeLevels = OTDirectivesHelpers.volumeLevels;
+            current.score += _.indexOf(volumeLevels, _.find(volumeLevels, 'name', level));
+            selectWinner();
+          });
+        }
+      };
+    }])
   .directive('otSubscriber', [
     'OTSession', 'OTDirectivesHelpers',
     function (OTSession, OTDirectivesHelpers) {
