@@ -1,7 +1,7 @@
 {
   "name": "opentok-angular",
   "main": "opentok-angular.js",
-  "version": "0.5.0",
+  "version": "0.8.4",
   "description": "Angular module for OpenTok",
   "keywords": [
     "angular",

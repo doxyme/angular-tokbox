@@ -254,11 +254,12 @@ angular.module('opentok', [])
             scope.publisher.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element));
           });
           scope.$on('$destroy', function () {
-            if (OTSession.session) {
-              OTSession.session.unpublish(scope.publisher);
-            } else {
-              scope.publisher.destroy();
-            }
+            scope.publisher.destroy();
+            //if (OTSession.session) {
+            //  OTSession.session.unpublish(scope.publisher);
+            //} else {
+            //
+            //}
             OTSession.publisher = scope.publisher = null;
           });
           if (OTSession.isSessionConnected()) {
