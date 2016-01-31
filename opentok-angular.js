@@ -8,8 +8,6 @@
  *  @License: Released under the MIT license (http://opensource.org/licenses/MIT)
  **/
 
-if (!window.TB) throw new Error('You must include the TB library before the TB_Angular library');
-
 angular.module('opentok', [])
   .constant('TB', window.TB)
   .provider('OTConfig', function () {
@@ -138,7 +136,7 @@ angular.module('opentok', [])
         }
       };
       window.OTSession = OTSession;
-      TB.$.eventing(OTSession);
+      (window.OTHelpers || window.TB.$).eventing(OTSession);
       return OTSession;
     }
   ])
@@ -197,7 +195,7 @@ angular.module('opentok', [])
       restrict: 'E',
       link: function (scope, element, attrs) {
         var props = $parse(attrs.props)();
-        var container = TB.initLayoutContainer(element[0], props);
+        var container = $window.initLayoutContainer(element[0], props);
         var layout = function () {
           container.layout();
           scope.$emit('otLayoutComplete');
