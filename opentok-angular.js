@@ -178,9 +178,18 @@ angular.module('opentok', [])
           if (count !== 30) return;
           var average = sum / count;
           sum = count = 0;
-          var currentLevel = _.findLast(_this.volumeLevels, function (volumeLevel) {
+
+          var volume = _.findLast(_this.volumeLevels, function (volumeLevel) {
             return average >= volumeLevel.level;
-          }).name;
+          });
+          if (!volume) {
+            console.log('!volume', {
+              average: average,
+              volumeLevels: _this.volumeLevels
+            });
+            return;
+          }
+          var currentLevel = volume.name;
           callback && callback(currentLevel);
           if (previousLevel === currentLevel) return;
           previousLevel = currentLevel;
