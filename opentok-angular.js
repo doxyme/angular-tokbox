@@ -317,11 +317,10 @@ angular.module('opentok', [])
           }
           if (OTSession.isSessionConnected()) {
             OTSession.session.publish(screensharePublisher);
-          } else {
-            screensharePublisher.on('streamDestroyed', function (event) {
-              event.preventDefault();
-            });
           }
+          screensharePublisher.on('streamDestroyed', function (event) {
+            $rootScope.$emit('TB:screenPublisher:streamDestroyed', event);
+          });
           OTSession.screensharePublisher = screensharePublisher;
         }
       };
