@@ -4,7 +4,8 @@
   "description": "Angular module for OpenTok",
   "main": "opentok-angular.js",
   "dependencies": {
-    "gulp": "~3.9.0"
+    "gulp": "~3.9.0",
+    "jshint": "^2.9.4"
   },
   "devDependencies": {
     "codeclimate-test-reporter": "0.3.0",

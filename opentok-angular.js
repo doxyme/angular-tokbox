@@ -96,8 +96,8 @@ angular.module('opentok', [])
             });
           });
         },
-        initPublisher: function (element, properties) {
-          return TB.initPublisher(OTConfig.apiKey, element, properties);
+        initPublisher: function (element, properties, cb) {
+          return TB.initPublisher(OTConfig.apiKey, element, properties, cb);
         },
         isSessionConnected: function () {
           return this.session && (this.session.connected ||
@@ -253,7 +253,11 @@ angular.module('opentok', [])
           props.width = props.width || element[0].offsetWidth;
           props.height = props.height || element[0].offsetHeight;
           var oldChildren = angular.element(element).children();
-          scope.publisher = OTSession.initPublisher(element[0], props);
+          scope.publisher = OTSession.initPublisher(element[0], props, function(err) {
+            if (err) {
+                $rootScope.$emit('otPublisherError', err, scope.publisher);
+              }
+          });
           // Make transcluding work manually by putting the children back in there
           angular.element(element).append(oldChildren);
           accessDialogEvents(scope.publisher);
@@ -333,7 +337,7 @@ angular.module('opentok', [])
           var lastWinner;
           var selectWinner = _.debounce(function () {
             lastWinner && lastWinner.removeClass('ot-active');
-            var winner = _.sortBy(ranking, 'score').pop();      
+            var winner = _.sortBy(ranking, 'score').pop();
             lastWinner = winner && winner.element.addClass('ot-active');
             ranking = [];
           }, 500);
