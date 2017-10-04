@@ -9,7 +9,7 @@
  **/
 
 angular.module('opentok', [])
-  .constant('TB', window.TB)
+  .constant('TB', window.OT)
   .provider('OTConfig', function () {
     var _apiKey;
     return {
@@ -136,7 +136,7 @@ angular.module('opentok', [])
         }
       };
       window.OTSession = OTSession;
-      (window.OTHelpers || window.TB.$).eventing(OTSession);
+      (window.OTHelpers || window.OT.$ || window.TB.$).eventing(OTSession);
       return OTSession;
     }
   ])
