@@ -1,5 +1,5 @@
 {
-  "name": "opentok-angular",
+  "name": "doxyme-angular-tokbox",
   "version": "1.0.0",
   "description": "Angular module for OpenTok",
   "main": "opentok-angular.js",
