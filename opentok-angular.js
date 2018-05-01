@@ -136,7 +136,8 @@ angular.module('opentok', [])
         }
       };
       window.OTSession = OTSession;
-      (window.OTHelpers || window.OT.$ || window.TB.$).eventing(OTSession);
+      var helpers = window.OTHelpers || window.OT.$ || window.TB.$;
+      if(helpers && helpers.eventing) helpers.eventing(OTSession);
       return OTSession;
     }
   ])
