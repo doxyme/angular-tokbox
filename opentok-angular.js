@@ -378,7 +378,7 @@ angular.module('opentok', [])
             OTSession.subscribers.push(subscriber);
             scope.$emit(scope, 'otLayout');
             subscriber.on('audioLevelUpdated', function(event) {
-              if(event.audioLevel < 0.25) return;
+              if(event.audioLevel < 0.1) return;
               scope.$emit('subscriber:audioLevelUpdated', event);
             });
             subscriber.on('audioLevelUpdated', OTDirectivesHelpers.setVolumeLevelChanges(element, function (level) {
