@@ -126,7 +126,9 @@ angular.module('opentok', [])
           var groups = _.groupBy(OTSession.streams, 'connection.id');
           return Object.keys(groups).map(function (key) {
             var streamGroup = groups[key];
-            return _.find(streamGroup, {videoType: preferred}) || streamGroup[0];
+            return _.find(streamGroup, {videoType: preferred});
+          }).filter(function(stream) {
+            return !!stream;
           });
         },
         disconnect: function () {
