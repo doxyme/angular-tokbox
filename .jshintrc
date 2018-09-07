@@ -31,7 +31,7 @@
     "expr": true,
     "indent": 2,
     "latedef": true,
-    "maxlen": 100,
+    "maxlen": 160,
     "newcap": true,
     "quotmark": "single",
     "smarttabs": true,
