@@ -8,7 +8,6 @@
  *  @License: Released under the MIT license (http://opensource.org/licenses/MIT)
  **/
 //lodash should be injected
-var _ = this._
 angular.module('opentok', [])
   .constant('TB', window.OT)
   .provider('OTConfig', function () {
