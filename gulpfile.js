@@ -13,7 +13,7 @@ gulp.task('bower', function() {
 
 gulp.task('prepare-opentok', /*['bower'],*/ function() {
   return gulp.src('src/opentok-angular.js')
-    .pipe(insert.prepend('; console.log(lodash); var _ = lodash; '))
+    .pipe(insert.prepend('; var _ = lodash; '))
     .pipe(gulp.dest('./.tmp'));
 });
 
