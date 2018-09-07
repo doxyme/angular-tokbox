@@ -75,7 +75,6 @@ angular.module('opentok', [])
   })
   .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '$timeout',
     function (TB, $rootScope, $q, OTConfig, $log, $timeout) {
-      console.log('OTSession', _.find)
       if (!OTConfig.apiKey) throw new Error('You need to specify api key');
       //OT.setLogLevel(OT.DEBUG);
       var OTSession = {
