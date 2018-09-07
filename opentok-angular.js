@@ -7,8 +7,7 @@
  *  @Copyright (c) 2014 Adam Ullman
  *  @License: Released under the MIT license (http://opensource.org/licenses/MIT)
  **/
-//lodash should be injected
-var _ = this._
+
 angular.module('opentok', [])
   .constant('TB', window.OT)
   .provider('OTConfig', function () {
@@ -24,8 +23,8 @@ angular.module('opentok', [])
       }
     };
   })
-  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '$timeout',
-    function (TB, $rootScope, $q, OTConfig, $log, $timeout) {
+  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '$timeout', '_',
+    function (TB, $rootScope, $q, OTConfig, $log, $timeout, _) {
       if (!OTConfig.apiKey) throw new Error('You need to specify api key');
       //OT.setLogLevel(OT.DEBUG);
       var OTSession = {
@@ -144,7 +143,7 @@ angular.module('opentok', [])
       return OTSession;
     }
   ])
-  .factory('OTDirectivesHelpers', [function () {
+  .factory('OTDirectivesHelpers', ['_', function (_) {
     return {
       volumeLevels: [
         {level: 0, name: 'volume-low'},
@@ -333,7 +332,7 @@ angular.module('opentok', [])
         }
       };
     }])
-    .directive('otActiveCallerLayout', ['OTDirectivesHelpers', function (OTDirectivesHelpers) {
+    .directive('otActiveCallerLayout', ['_', 'OTDirectivesHelpers', function (_, OTDirectivesHelpers) {
       return {
         restrict: 'EA',
         link: function (scope) {
