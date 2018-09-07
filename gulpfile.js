@@ -3,7 +3,6 @@ var gulp = require('gulp'),
   uglify = require('gulp-uglify'),
   bower = require('gulp-bower'),
   concat = require('gulp-concat'),
-  insert = require('gulp-insert'),
   customLodash = require('gulp-lodash-custom')
 ;
 
@@ -13,7 +12,6 @@ gulp.task('bower', function() {
 
 gulp.task('prepare-opentok', /*['bower'],*/ function() {
   return gulp.src('src/opentok-angular.js')
-    .pipe(insert.prepend('; var _ = lodash; '))
     .pipe(gulp.dest('./.tmp'));
 });
 
@@ -23,7 +21,7 @@ gulp.task('prepare-lodash', function () {
 
   return gulp.src('opentok-angular.js')
     .pipe(customLodash({
-      lodashCli: lodashCli + ' exports=global iife="%output%" ',
+      lodashCli: lodashCli + ' exports=none iife="var _;(function(){%output%; _ = lodash;})()" ',
       target: ' ./.tmp/lodash-custom.min.js'
     }));
 });
