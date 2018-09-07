@@ -23,10 +23,11 @@ gulp.task('app-build', ['bower'], function() {
 gulp.task('add-lodash', function () {
   gulp.src('opentok-angular.js')
       .pipe(customLodash({}))
+      .pipe(gulp.dest('./'));
 });
 
-gulp.task('build', ['add-lodash'], function(){
-    gulp.src(['lodash-custom.min.js', 'opentok-angular.js'])
+gulp.task('default', ['add-lodash', 'app-build'], function(){
+  gulp.src(['lodash-custom.min.js', 'opentok-angular.min.js'])
     .pipe(concat('build.js'))
     .pipe(gulp.dest('./'));
 });

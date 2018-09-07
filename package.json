@@ -2,7 +2,7 @@
   "name": "doxyme-angular-tokbox",
   "version": "1.0.0",
   "description": "Angular module for OpenTok",
-  "main": "opentok-angular.js",
+  "main": "build.js",
   "dependencies": {
     "jshint": "^2.9.4"
   },
@@ -11,6 +11,7 @@
     "gulp": "^3.9.1",
     "gulp-bower": "0.0.11",
     "gulp-concat": "^2.6.1",
+    "gulp-inject-string": "^1.1.1",
     "gulp-jshint": "~2.0.0",
     "gulp-lodash-custom": "0.0.3",
     "gulp-rename": "~1.2.2",
