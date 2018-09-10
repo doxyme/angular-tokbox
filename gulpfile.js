@@ -19,7 +19,7 @@ gulp.task('prepare-lodash', function () {
   const lodashBin = require('lodash-cli/package.json').bin.lodash;
   const lodashCli = require.resolve('lodash-cli/' + lodashBin);
 
-  return gulp.src('opentok-angular.js')
+  return gulp.src('src/opentok-angular.js')
     .pipe(customLodash({
       lodashCli: lodashCli + ' exports=none iife="var _;(function(){%output%; _ = lodash;})()" ',
       target: ' ./.tmp/lodash-custom.min.js'
