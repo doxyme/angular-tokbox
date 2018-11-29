@@ -400,7 +400,6 @@ angular.module('opentok', [])
           props: '&'
         },
         link: function (scope, element) {
-          if (!scope.stream) debugger;
           element.addClass('ot-' + scope.stream.videoType);
           var props = scope.props() || {};
           props.width = props.width || element[0].offsetWidth;
