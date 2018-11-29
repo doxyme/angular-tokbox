@@ -391,8 +391,8 @@ angular.module('opentok', [])
       };
     }])
   .directive('otSubscriber', [
-    'OTSession', 'OTDirectivesHelpers',
-    function (OTSession, OTDirectivesHelpers) {
+    '$rootScope', 'OTSession', 'OTDirectivesHelpers',
+    function ($rootScope, OTSession, OTDirectivesHelpers) {
       return {
         restrict: 'E',
         scope: {
@@ -411,6 +411,9 @@ angular.module('opentok', [])
           });
           subscriber.on('loaded', function () {
             OTSession.subscribers.push(subscriber);
+
+            $rootScope.$emit('otSubscriberCreated', subscriber);
+
             scope.$emit(scope, 'otLayout');
             subscriber.on('audioLevelUpdated', function(event) {
               if(event.audioLevel < 0.1) return;
