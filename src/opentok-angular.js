@@ -7,7 +7,9 @@
  *  @Copyright (c) 2014 Adam Ullman
  *  @License: Released under the MIT license (http://opensource.org/licenses/MIT)
  **/
-//lodash should be injected
+
+/* global _ */
+
 angular.module('opentok', [])
   .constant('TB', window.OT)
   .provider('OTConfig', function () {
@@ -23,8 +25,8 @@ angular.module('opentok', [])
       }
     };
   })
-  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log', '$timeout',
-    function (TB, $rootScope, $q, OTConfig, $log, $timeout) {
+  .factory('OTSession', ['TB', '$rootScope', '$q', 'OTConfig', '$log',
+    function (TB, $rootScope, $q, OTConfig, $log) {
       if (!OTConfig.apiKey) throw new Error('You need to specify api key');
       //OT.setLogLevel(OT.DEBUG);
       var OTSession = {
@@ -88,7 +90,7 @@ angular.module('opentok', [])
               $rootScope.$digest();
             }
           });
-          OTSession.trigger('init');
+          // OTSession.trigger('init');
           return $q(function (resolve, reject) {
             OTSession.session.connect(token, function (err) {
               if (err) return reject(err);
@@ -138,8 +140,8 @@ angular.module('opentok', [])
         }
       };
       window.OTSession = OTSession;
-      var helpers = window.OTHelpers || window.OT.$ || window.TB.$;
-      if(helpers && helpers.eventing) helpers.eventing(OTSession);
+      // var helpers = window.OTHelpers || window.OT.$ || window.TB.$;
+      // if(helpers && helpers.eventing) helpers.eventing(OTSession);
       return OTSession;
     }
   ])
@@ -161,7 +163,7 @@ angular.module('opentok', [])
           // 1.5 scaling to map the -30 - 0 dBm range to [0,1]
           var logLevel = (Math.log(movingAvg) / Math.LN10) / 1.5 + 1;
           return Math.min(Math.max(logLevel, 0), 1);
-        }
+        };
       },
       setVolumeLevelChanges: function (element, callback) {
         var _this = this;
@@ -200,7 +202,7 @@ angular.module('opentok', [])
           element.addClass(currentLevel);
         };
       }
-    }
+    };
   }])
   .directive('otLayout', ['$window', '$parse', 'TB', 'OTSession', function ($window, $parse, TB, OTSession) {
     return {
@@ -288,8 +290,8 @@ angular.module('opentok', [])
       };
     }])
   .directive('otScreenPublisher', [
-    '$rootScope', 'OTSession', 'OTDirectivesHelpers', '$log',
-    function ($rootScope, OTSession, OTDirectivesHelpers, $log) {
+    '$rootScope', 'OTSession', 'OTDirectivesHelpers',
+    function ($rootScope, OTSession, OTDirectivesHelpers) {
       return {
         restrict: 'E',
         scope: {
