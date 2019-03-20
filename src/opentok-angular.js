@@ -75,7 +75,7 @@ angular.module('opentok', [])
                 OTSession.uniqueStreams.camera.splice(0, OTSession.uniqueStreams.camera.length);
                 OTSession.connections.splice(0, OTSession.connections.length);
                 OTSession.resetPublishers();
-                OTSession.off();
+                // OTSession.off();
                 OTSession.session = null;
               });
             },
